@@ -1,6 +1,7 @@
 from tkinter import *
 import random
 from tkinter import messagebox
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
@@ -23,17 +24,51 @@ def save():
     webs = website_entry.get()
     usr = username_entry.get()
     pas = password_entry.get()
-    is_ok = None
+    new_data = {
+        webs: {
+            "email": usr,
+            "password": pas,
+        }
+    }
     if len(webs) == 0 or len(pas) == 0 or len(usr) == 0:
         messagebox.showwarning(title="Oops",message="Don't leave the fields empty")
     else:
         is_ok = messagebox.askokcancel(title=webs,message=f"Website: {webs}\nUsername: {usr}\nPassword: {pas}\nClick Ok to Save!")
-    if is_ok:
-        with open("password.txt","a") as pf:
-            pf.write(f"{webs} | {usr} | {pas}\n")
-        website_entry.delete(0,END)
-        username_entry.delete(0,END)
-        password_entry.delete(0,END)
+        if is_ok:
+            try:
+                with open("password.json","r") as json_file:
+                    data = json.load(json_file)
+                    data.update(new_data)
+            except FileNotFoundError:
+                with open("password.json","w") as json_file:
+                    json.dump(new_data, json_file, indent=4)
+            else:
+                with open("password.json", "w") as json_file:
+                    json.dump(data, json_file, indent=4)
+                    print("data_added")
+            finally:
+                website_entry.delete(0, END)
+                password_entry.delete(0, END)
+
+# ----------------------------- SEARCH -------------------------------- #
+def find_password():
+    web = website_entry.get()
+    try:
+        with open("password.json","r") as json_file:
+            dict = json.load(json_file)
+            flag = 0
+            for key in dict:
+                if key.lower() == web.lower():
+                    mssg = ""
+                    for inner_key in dict[key]:
+                        mssg += f"{inner_key}: {dict[key][inner_key]}\n"
+                    messagebox.showinfo(key,message=mssg)
+                    print(mssg)
+                    flag = 1
+            if flag == 0:
+                messagebox.showerror(title="Error",message=f"{web} Data not found")
+    except FileNotFoundError:
+        messagebox.showerror(title="Error", message="JSON file not found")
 
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
@@ -66,4 +101,7 @@ gp_button.grid(row=3,column=2,padx=10)
 
 add_button = Button(text="Add",width=30,bg="white",command=save)
 add_button.grid(row=4,column=1)
+
+search_button = Button(text="Search",width=14,command=find_password,bg="white")
+search_button.grid(row=1,column=2,padx=10)
 window.mainloop()
