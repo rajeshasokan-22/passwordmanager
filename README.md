@@ -1,4 +1,4 @@
 # passwordmanager
-python
-tkinter
+python,
+tkinter,
 logo.png
